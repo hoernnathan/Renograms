@@ -1,4 +1,4 @@
-def DrawBoard(arr):
+def DrawBoard(origArr, arr):
     print("     A    B    C    D    E    F    G    H")
     print("    ____ ____ ____ ____ ____ ____ ____ ____ ")
     counter = 0
@@ -7,8 +7,12 @@ def DrawBoard(arr):
         for j in range(8):
             if arr[counter] == 0:
                 print("    |", end="")
-            elif arr[counter] < 10:
+            elif arr[counter] < 10 and arr[counter] not in origArr:
                 print("", arr[counter], " |", end="")
+            elif arr[counter] < 10 and arr[counter] in origArr:
+                print(" {}* |".format(arr[counter]), end="")
+            elif arr[counter] >= 10 and arr[counter] in origArr:
+                print(" {}*|".format(arr[counter]), end="")
             else:
                 print("", arr[counter], "|", end="")
             counter += 1
@@ -20,9 +24,9 @@ def CheckSpace(origArr, col, row):
     # need to convert the col (A=1, B=2, etc.) and row to integer
     # then calculate the position to check in the array that corresponds to this row and column
     # if the number is 0 or a number that does not exist in origArr, then return true, else return false
-    column = ord(col) - 65
+    column = ord(col) - 64
     row = int(row)
-    pos = ((row-1)*8-1) + column
+    pos = (row-1)*8 + column - 1
     if origArr[pos] != 0:
         print("Cannot insert into this space, a number has been entered here by default")
         return False
@@ -35,10 +39,10 @@ def ClearBoard(origArr, arr):
     return arr
 
 def UpdateBoard(arr, remains, col, row, num):
-    column = ord(col) - 65
+    column = ord(col) - 64
     row = int(row)
     number = int(num)
-    pos = ((row - 1) * 8 - 1) + column
+    pos = (row-1)*8 + column - 1
     if arr[pos] == 0 and number == 0:
         print("Nothing changed here")
         return arr, remains
@@ -51,16 +55,21 @@ def UpdateBoard(arr, remains, col, row, num):
     arr[pos] = number
     return arr, remains
 
-def CheckCompleted(arr):
+def CheckCompleted(remains, arr):
+    # we haven't filled all the squares, so stop here
+    if remains:
+        return False
     arr2d = []
-    for item in arr:
+    #for item in arr:
         # no need to go through any more of this function if a zero is contained, the puzzle is obviously incomplete
-        if item == 0:
-            return False
+    #    if item == 0:
+    #        return False
+    index_counter = 0
     for i in range(7):
         rowarr = []
         for j in range(8):
-            rowarr.append(arr[j])
+            rowarr.append(arr[index_counter])
+            index_counter += 1
         arr2d.append(rowarr)
     row_index = 0
     col_index = 0
@@ -73,8 +82,6 @@ def CheckCompleted(arr):
     new_col_index = 0
     for i in range(1, 55):
         counter = 0
-        max_counter = 0
-        code = ""
         if i == 1:
             new_row_index = row_index
             new_col_index = col_index
@@ -114,7 +121,7 @@ def CheckCompleted(arr):
         else:
             code = "ALL"
             max_counter = 8
-        # TODO: these codes help me to know which adjacent squares to check (to avoid going out of bounds)
+        # these codes help me to know which adjacent squares to check (to avoid going out of bounds)
         # check S
         if code in ["TL", "TR", "TOP", "LEFT", "RIGHT", "ALL"]:
             if arr2d[row_index+1][col_index] != i+1:
@@ -175,14 +182,33 @@ def CheckCompleted(arr):
         col_index = new_col_index
     return True
 
+def DisplayHelpMenu():
+    print("\nHere is the help guide for Renograms!")
+    print("How to play:")
+    print("  - The goal of the game is to fill the numbers 1-56 into the grid so that every consecutive number is adjacent vertically, horizontally, or diagonally.")
+    print("  - For every puzzle, certain numbers in squares are marked with an asterisk (*). These numbers are set in position and cannot be changed. You can only place numbers in empty squares or squares occupied by a number without an asterisk.")
+    print("  - The numbers you have left to place are listed in the box titled: 'numbers to put in puzzle'. When this box is empty, you have filled all the squares.")
+    print("  - To place a number in a square, type the column letter, then the row number right after (without a space). Then type a space and the number you want to place in this square.")
+    print("     - e.g. to place the number 1 into square A1, type 'A1 1'")
+    print("  - If you want to remove a number from a square you can enter 0 as your number.")
+    print("     - e.g. to clear the number in square A1, type 'A1 0'")
+    print("  - If you want to place a different number in a square, you can just type the square ID and the number. The number that was in the square will get placed back into the 'numbers to put in puzzle' list")
+    print("  - If you want to clear the board of all non-asterisk squares, you can type CLEAR when asked for a square ID and number.")
+    print("  - The puzzle will be complete when a continuous path from 1-56 can be drawn (i.e. every consecutive number is contained in one of the adjacently vertical, horizontal, or diagonal squares)")
+    print("When prompted to type a square ID and number, you can also type the following:")
+    print("  - Q to quit the puzzle")
+    print("  - CLEAR to clear the board of all squares you have entered numbers into")
+    print("  - HELP to bring up this help menu\n")
+
 def PlayGame(arr):
-    #print(arr)
     completed = False
     input2 = ""
     # keep track of the original array so that the user does not replace numbers that were automatically put in the puzzle to begin with
-    origArr = arr
+    origArr = []
+    for i in range(len(arr)):
+        origArr.append(arr[i])
     while not completed and input2 != 'Q':
-        DrawBoard(arr)
+        DrawBoard(origArr, arr)
         remains = []
         col = ""
         row = ""
@@ -192,12 +218,12 @@ def PlayGame(arr):
             if i not in arr:
                 remains.append(i)
         print(remains)
+        if input2 == "HELP":
+            DisplayHelpMenu()
         valid = False
         while not valid:
             input2 = input("Enter the square you want to place a number in, followed by the number (e.g. H8 12):")
-            if input2 == 'Q':
-                valid = True
-            if input2 == "CLEAR":
+            if input2 in ['Q', "CLEAR", "HELP"]:
                 valid = True
             elif len(input2) < 4:
                 valid = False
@@ -205,34 +231,42 @@ def PlayGame(arr):
                 col = input2[0]
                 row = input2[1]
                 num = input2[3:]
-                if col >= 'H' or col <= 'A':
+                if col > 'H' or col < 'A':
                     valid = False
-                elif row >= '8' or row <= '1':
+                    print("Error, invalid column")
+                elif not row.isdigit():
                     valid = False
+                    print("Error, invalid row")
+                elif int(row) > 8 or int(row) < 1:
+                    valid = False
+                    print("Error, invalid row")
                 elif not num.isdigit():
                     valid = False
-                elif int(num) >= 56 or int(num) <= 0:
+                    print("Error, invalid number")
+                elif int(num) > 56 or int(num) < 0:
                     valid = False
+                    print("Error, invalid number")
                 elif int(num) not in remains and int(num) != 0:
                     valid = False
+                    print("Error, invalid number")
                 elif not CheckSpace(origArr, col, row):
                     valid = False
                 else:
                     valid = True
-                # TODO: also give the user the ability to clear the board and clear a square (entering a square with a number already contained in it will clear it)
-        print("valid input")
         if input2 == "CLEAR":
             arr = ClearBoard(origArr, arr)
+        elif input2 == "HELP":
+            pass
         elif input2 != 'Q':
             # to clear a square, the user should enter the square followed by a 0
             arr, remains = UpdateBoard(arr, remains, col, row, num)
-        # TODO: update the square here with the new number, or set it to 0
-        if not CheckCompleted(arr):
+        if not CheckCompleted(remains, arr):
             completed = False
         else:
             completed = True
     if completed:
-        print("Congratulations, you solved the puzzle!")
+        DrawBoard(origArr, arr)
+        print("\nCONGRATULATIONS! You solved the puzzle!")
 
 if __name__ == '__main__':
     print("Welcome to Renograms! Press P to start a new puzzle. Press Q to quit.")
