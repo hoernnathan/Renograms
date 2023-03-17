@@ -1,5 +1,5 @@
 # Renograms
-This is a Python text-based version of the Renograms game.
+This is a Python text-based version of the Renograms game, which is a puzzle in the Nancy Drew PC game #23: Shadow at the Water's Edge.
 
 How to play:
   - The goal of the game is to fill the numbers 1-56 into the grid so that every consecutive number is adjacent vertically, horizontally, or diagonally.
